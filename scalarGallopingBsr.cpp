@@ -1,36 +1,30 @@
 #include "scalarGallopingBsr.hpp"
-#include "bsrEncoder.hpp"
 
-ScalarGallopingBsr::ScalarGallopingBsr() : IntersectionAlg(){
+ScalarGallopingBsr::ScalarGallopingBsr() : IntersectionAlgBsr(){
     
 }
 
-int ScalarGallopingBsr::intersect(int* arrayA, int sizeA, int* arrayB, int sizeB, int* arrayResult){
-    int *bases_a, *states_a, *bases_b, *states_b, *bases_c, *states_c;
-    int card_a = 0, card_b = 0, card_c = 0;
-    align_malloc((void**)&bases_a, 32, sizeof(int) * sizeA);
-    align_malloc((void**)&states_a, 32, sizeof(int) * sizeA);
-    align_malloc((void**)&bases_b, 32, sizeof(int) * sizeB);
-    align_malloc((void**)&states_b, 32, sizeof(int) * sizeB);
-    align_malloc((void**)&bases_c, 32, sizeof(int) * std::min(sizeA, sizeB));
-    align_malloc((void**)&states_c, 32, sizeof(int) * std::min(sizeA, sizeB));
-    card_a = BsrEncoder::offline_uint_trans_bsr(arrayA, sizeA, bases_a, states_a);
-    card_b = BsrEncoder::offline_uint_trans_bsr(arrayB, sizeB, bases_b, states_b);
+int ScalarGallopingBsr::intersect(BsrArrays* arrays_a, BsrArrays* arrays_b, int* arrayResult){
+    int* array_result_bases;
+    int* array_result_states;
+    int arrayResultCard, arrayResultSize = 0;
 
-    card_c = this->intersect_scalargalloping_bsr(bases_a, states_a, card_a, bases_b, states_b, card_b, bases_c, states_c);
+    int sizeMin = std::min(arrays_a->size, arrays_b->size);
+
+    align_malloc((void**)&array_result_bases, 32, sizeof(int) * sizeMin);
+    align_malloc((void**)&array_result_states, 32, sizeof(int) * sizeMin);
+
+    arrayResultCard = this->intersect_scalargalloping_bsr(arrays_a->bases, arrays_a->states, arrays_a->card, arrays_b->bases, arrays_b->states, arrays_b->card, array_result_bases, array_result_states);
     int size_c = 0;
 
-    align_malloc((void**)&arrayResult, 32, sizeof(int) * std::min(sizeA, sizeB));
+    align_malloc((void**)&arrayResult, 32, sizeof(int) * sizeMin);
 
-    size_c = BsrEncoder::offline_bsr_trans_uint(bases_c, states_c, card_c, arrayResult);
+    arrayResultSize = BsrEncoder::offline_bsr_trans_uint(array_result_bases, array_result_states, arrayResultCard, arrayResult);
 
-    free(bases_a);
-    free(states_a);
-    free(bases_b);
-    free(states_b);
-    free(bases_c);
-    free(states_c);
-    return size_c;
+    free(array_result_bases);
+    free(array_result_states);
+
+    return arrayResultSize;
 }
 
 std::string ScalarGallopingBsr::getName(){

@@ -3,29 +3,54 @@
 
 #include <vector>
 #include "intersectionAlg.hpp"
+#include "intersectionAlgBsr.hpp"
+#include "roaring.hpp"
 
+
+class TesterResult{
+    public:                
+        TesterResult();       
+
+        int duration;
+        std::vector<int> resultLengths;
+        std::string algorithm;
+};
 
 class Tester{
     public:
-        //Intersections of randomly selected pairs of terms
-        int randomPairIntersection(std::vector<std::vector<int>*>* data, IntersectionAlg* algorithm, int count);
+        //Checks lengths of results
+        static bool checkIntersectionResultSizes(TesterResult reference, TesterResult result);
 
-        //Intersections of randomly selected pairs of terms; distributive randomness based on the number of elements of given term
-        int randomDistPairIntersection(std::vector<std::vector<int>*>* data, IntersectionAlg* algorithm, int count);
+        //Generate testing data for random pair intersection
+        std::vector<std::vector<int>*> generateRandomPairTerms(int count, std::vector<int*>* data, std::vector<int>* dataLengths);
 
-        //Intersections of randomly selected multiple terms; number of terms selected randomly; term selection by distributive randomness
-        int randomDistMultipleIntersections(std::vector<std::vector<int>*>* data, IntersectionAlg* algorithm, int count, int maxTermCount);                
+        //Generate testing data for distributed random pair intersection
+        std::vector<std::vector<int>*> generateRandomDistPairTerms(int count, std::vector<int*>* data, std::vector<int>* dataLengths);
 
-        
+        //Generate testing data for distributed random multiple intersection
+        std::vector<std::vector<int>*> generateRandomDistMultipleTerms(int count, std::vector<int*>* data, std::vector<int>* dataLengths, int maxTermCount);
+
+        //Generate testing data from the top "count" terms
+        std::vector<std::vector<int>*> generateTopPairs(int count, std::vector<int*>* data, std::vector<int>* dataLengths);
+
+        //Intersections of terms
+        TesterResult testIntersection(std::vector<int*>* data, std::vector<int>* dataLengths, std::vector<std::vector<int>*>* terms, IntersectionAlg* algorithm); 
+
+        //Intersections of terms for BSR encoding
+        TesterResult testIntersection(std::vector<BsrArrays*>* data, std::vector<std::vector<int>*>* terms, IntersectionAlgBsr* algorithm);            
+                
     private:
         //Generates array of term lengths for distributed probabilities; returns max value
-        long getTermLengthArray(std::vector<std::vector<int>*>* data, long* result);
+        long getTermLengthArray(std::vector<int>* dataLengths, long* result);
 
         //Finds the term based on distributed probability
         int getTermFromDistribution(long* lengthArray, int lengthArraySize, int value);
 
-        //Intersects the given terms, returns duration
-        int intersect(std::vector<std::vector<int>*>* data, int* terms, int termsLength, IntersectionAlg* algorithm);
+        //Intersects the given terms
+        TesterResult intersect(std::vector<int*>* data, std::vector<int>* dataLengths, int* terms, int termsLength, IntersectionAlg* algorithm);
+
+        //Intersects the pair of given terms for BSR
+        TesterResult intersectPairsBsr(std::vector<BsrArrays*>* data, int* terms, int termsLength, IntersectionAlgBsr* algorithm);
 };
 
 #endif

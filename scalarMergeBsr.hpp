@@ -1,12 +1,12 @@
 #ifndef SCALAR_MERGE_BSR_HPP
 #define SCALAR_MERGE_BSR_HPP
 
-#include "intersectionAlg.hpp"
+#include "intersectionAlgBsr.hpp"
 
-class ScalarMergeBsr : public IntersectionAlg{
+class ScalarMergeBsr : public IntersectionAlgBsr{
     public:
         ScalarMergeBsr();
-        virtual int intersect(int* arrayA, int sizeA, int* arrayB, int sizeB, int* arrayResult);               
+        virtual int intersect(BsrArrays* arrays_a, BsrArrays* arrays_b, int* arrayResult);               
         virtual std::string getName();
 
     private:

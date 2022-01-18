@@ -1,5 +1,4 @@
 #include "roaring.hpp"
-#include "./roaring/roaring.hh"
 
 
 RoaringAlg::RoaringAlg() : IntersectionAlg(){

@@ -3,13 +3,13 @@
 
 #include <x86intrin.h>
 #include <cstdint>
-#include "intersectionAlg.hpp"
+#include "intersectionAlgBsr.hpp"
 
 
-class ShufflingBsr : public IntersectionAlg{
+class ShufflingBsr : public IntersectionAlgBsr{
     public:
         ShufflingBsr();
-        virtual int intersect(int* arrayA, int sizeA, int* arrayB, int sizeB, int* arrayResult);               
+        virtual int intersect(BsrArrays* arrays_a, BsrArrays* arrays_b, int* arrayResult);               
         virtual std::string getName();        
     private:
         int intersect_shuffle_bsr_b4(int* bases_a, int* states_a, int size_a,

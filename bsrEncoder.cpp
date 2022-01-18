@@ -1,4 +1,5 @@
 #include "bsrEncoder.hpp"
+#include <iostream>
 
 
 const int BSR_WIDTH = sizeof(int) * 8;
@@ -35,4 +36,39 @@ int BsrEncoder::offline_bsr_trans_uint(int *bases_a, int *states_a, int size_a, 
         }
     }
     return cnt;
+}
+
+void BsrEncoder::align_malloc(void **memptr, size_t alignment, size_t size)
+{
+    int malloc_flag = posix_memalign(memptr, alignment, size);
+}
+
+BsrArrays* BsrEncoder::generateBsrArrays(int* array_a, int size_a){
+    BsrArrays* output = new BsrArrays();
+    align_malloc((void**)&(output->bases), 32, sizeof(int) * size_a);
+    align_malloc((void**)&(output->states), 32, sizeof(int) * size_a);
+    output->card = BsrEncoder::offline_uint_trans_bsr(array_a, size_a, output->bases, output->states);
+    output->size = size_a;
+    return output;
+}
+
+BsrArrays::BsrArrays(){
+
+}
+
+BsrArrays::BsrArrays(BsrArrays* prototype){
+    this->size = prototype->size;
+    this->card = prototype->card;
+    
+    BsrEncoder::align_malloc((void**)&(this->bases), 32, sizeof(int)*(this->size));
+    BsrEncoder::align_malloc((void**)&(this->states), 32, sizeof(int)*(this->size));
+    for(int i = 0; i < this->size; i++){
+        this->bases[i] = prototype->bases[i];
+        this->states[i] = prototype->states[i];
+    }
+}
+
+BsrArrays::~BsrArrays(){
+    free(this->bases);
+    free(this->states);
 }

@@ -12,24 +12,23 @@ void align_malloc(void **memptr, size_t alignment, size_t size)
     int malloc_flag = posix_memalign(memptr, alignment, size);
 }
 
-int Tester::randomPairIntersection(vector<vector<int>*>* data, IntersectionAlg* algorithm, int count){
-    srand(time(0));
-    int duration = 0;
-
+vector<vector<int>*> Tester::generateRandomPairTerms(int count, std::vector<int*>* data, std::vector<int>* dataLengths){    
+    vector<vector<int>*> output;
     for(int i = 0; i < count; i++){
         int indexArrayA = rand() % data->size();
         int indexArrayB = rand() % data->size();
-        int indexes[2] = {indexArrayA, indexArrayB};
-
-        duration += this->intersect(data, indexes, 2, algorithm);
+        vector<int>* currentTerms = new vector<int>();
+        currentTerms->push_back(indexArrayA);
+        currentTerms->push_back(indexArrayB);
+        output.push_back(currentTerms);
     }
-    return duration;
+    return output;
 }
 
-int Tester::randomDistPairIntersection(vector<vector<int>*>* data, IntersectionAlg* algorithm, int count){
-    srand(time(0));
+vector<vector<int>*> Tester::generateRandomDistPairTerms(int count, std::vector<int*>* data, std::vector<int>* dataLengths){   
+    vector<vector<int>*> output;
     long* termLengthArray = new long[data->size()];
-    long maxValue = this->getTermLengthArray(data, termLengthArray);
+    long maxValue = this->getTermLengthArray(dataLengths, termLengthArray);
 
     int duration = 0;
 
@@ -37,46 +36,114 @@ int Tester::randomDistPairIntersection(vector<vector<int>*>* data, IntersectionA
         int valueA = rand() % maxValue;
         int valueB = rand() % maxValue;        
         int indexArrayA = this->getTermFromDistribution(termLengthArray, data->size(), valueA);
-        int indexArrayB = this->getTermFromDistribution(termLengthArray, data->size(), valueB);
-        int indexes[2] = {indexArrayA, indexArrayB};
-        duration += this->intersect(data, indexes, 2, algorithm);
+        int indexArrayB = this->getTermFromDistribution(termLengthArray, data->size(), valueB);        
+        vector<int>* currentTerms = new vector<int>();
+        currentTerms->push_back(indexArrayA);
+        currentTerms->push_back(indexArrayB);
+        output.push_back(currentTerms);
     }
     delete termLengthArray;
 
-    return duration;
+    return output;
 }
 
-int Tester::randomDistMultipleIntersections(vector<vector<int>*>* data, IntersectionAlg* algorithm, int count, int maxTermCount){
-    srand(time(0));
+std::vector<std::vector<int>*> Tester::generateRandomDistMultipleTerms(int count, std::vector<int*>* data, std::vector<int>* dataLengths, int maxTermCount){    
+    vector<vector<int>*> output;
     long* termLengthArray = new long[data->size()];
-    long maxValue = this->getTermLengthArray(data, termLengthArray);
+    long maxValue = this->getTermLengthArray(dataLengths, termLengthArray);
 
     int duration = 0;
 
     for(int i = 0; i < count; i++){
         int termCount = rand() % (maxTermCount - 2) + 2;
-        
-        int* indexes = new int[termCount];
+        vector<int>* currentTerms = new vector<int>();
+
         for(int j = 0; j < termCount; j++){
             int value = rand() % maxValue;
             int indexArray = this->getTermFromDistribution(termLengthArray, data->size(), value);
-            indexes[j] = indexArray;
+            currentTerms->push_back(indexArray);
         }
-                
-        duration += this->intersect(data, indexes, termCount, algorithm);
-        delete indexes;
+        output.push_back(currentTerms);
     }
 
     delete termLengthArray;
 
-    return duration;
+    return output;
 }
 
-long Tester::getTermLengthArray(vector<vector<int>*>* data, long* result){
+std::vector<std::vector<int>*> Tester::generateTopPairs(int count, std::vector<int*>* data, std::vector<int>* dataLengths){
+    vector<vector<int>*>output;
+    for(int i = 0; i < count - 1; i++){
+        for(int j = i; j < count; j++){
+            vector<int>* currentTerms = new vector<int>();
+            currentTerms->push_back(i);
+            currentTerms->push_back(j);
+            output.push_back(currentTerms);
+        }
+    }
+    return output;
+}
+
+TesterResult Tester::testIntersection(std::vector<int*>* data, std::vector<int>* dataLengths, std::vector<std::vector<int>*>* terms, IntersectionAlg* algorithm){
+    srand(time(0));
+    
+    TesterResult output, tempOutput;
+    output.algorithm = algorithm->getName();
+
+    for(int i = 0; i < terms->size(); i++){
+        int termCount = terms->at(i)->size();        
+        int* indexes = new int[termCount];
+        for(int j = 0; j < termCount; j++){
+            indexes[j] = terms->at(i)->at(j);
+        }
+                
+        tempOutput = this->intersect(data, dataLengths, indexes, termCount, algorithm);
+        output.duration += tempOutput.duration;
+        output.resultLengths.push_back(tempOutput.resultLengths.at(0));
+        delete indexes;
+    }
+
+    return output;
+}
+
+TesterResult Tester::testIntersection(std::vector<BsrArrays*>* data, std::vector<std::vector<int>*>* terms, IntersectionAlgBsr* algorithm){
+    srand(time(0));
+    
+    TesterResult output, tempOutput;
+    output.algorithm = algorithm->getName();
+
+    for(int i = 0; i < terms->size(); i++){
+        int termCount = terms->at(i)->size();        
+        int* indexes = new int[termCount];
+        for(int j = 0; j < termCount; j++){
+            indexes[j] = terms->at(i)->at(j);
+        }
+                
+        tempOutput = this->intersectPairsBsr(data, indexes, termCount, algorithm);
+        output.duration += tempOutput.duration;
+        output.resultLengths.push_back(tempOutput.resultLengths.at(0));
+        delete indexes;
+    }
+
+    return output;
+}
+
+bool Tester::checkIntersectionResultSizes(TesterResult reference, TesterResult result){
+    if(reference.resultLengths.size() != result.resultLengths.size())
+        return false;
+    for(int j = 0; j < reference.resultLengths.size(); j++){
+        if(reference.resultLengths.at(j) != result.resultLengths.at(j)){
+            return false;
+        }
+    }
+    return true;
+}
+
+long Tester::getTermLengthArray(vector<int>* dataLengths, long* result){
     long currentLength = 0;
-    int resultSize = data->size();
+    int resultSize = dataLengths->size();
     for(int i = 0; i < resultSize; i++){
-        currentLength += data->at(i)->size();
+        currentLength += dataLengths->at(i);
         result[i] = currentLength;
     }
     return currentLength;
@@ -99,42 +166,34 @@ int Tester::getTermFromDistribution(long* lengthArray, int lengthArraySize, int 
     return -1;
 }
 
-int Tester::intersect(vector<vector<int>*>* data, int* terms, int termsLength, IntersectionAlg* algorithm){    
-    int duration = 0;
+TesterResult Tester::intersect(std::vector<int*>* data, std::vector<int>* dataLengths, int* terms, int termsLength, IntersectionAlg* algorithm){    
+    TesterResult output;
+
     chrono::time_point<chrono::system_clock> timeStart;
     chrono::time_point<chrono::system_clock> timeStop;     
 
-    int progressArraySize = data->at(terms[0])->size();
+    int progressArraySize = dataLengths->at(terms[0]);
     int* progressArray = new int[progressArraySize];
     for(int i = 0; i < progressArraySize; i++){
-        progressArray[i] = data->at(terms[0])->at(i);
+        progressArray[i] = data->at(terms[0])[i];
     }
 
     for(int i = 1; i < termsLength; i++){
         int indexArrayNew = terms[i];
-        int arrayNewSize = data->at(indexArrayNew)->size();
-        int* arrayNew = new int[arrayNewSize];
-
-        for(int j = 0; j < arrayNewSize; j++){
-            arrayNew[j] = data->at(indexArrayNew)->at(j);
-        }
-
-        int sizeResult = arrayNewSize;
-        if(arrayNewSize < progressArraySize)
-            sizeResult = progressArraySize;
+        int arrayNewSize = dataLengths->at(indexArrayNew);
+        int* arrayNew = data->at(indexArrayNew);
 
         int* arrayAlgResult;
-        align_malloc((void**)&arrayAlgResult, 32, sizeof(int) * sizeResult);
+        align_malloc((void**)&arrayAlgResult, 32, sizeof(int) * std::min(arrayNewSize, progressArraySize));
         int arrayAlgResultSize;
 
         timeStart = chrono::system_clock::now(); 
         arrayAlgResultSize = algorithm->intersect(progressArray, progressArraySize, arrayNew, arrayNewSize, arrayAlgResult);
         timeStop = chrono::system_clock::now();
 
-        duration += chrono::duration_cast<chrono::milliseconds>(timeStop - timeStart).count();
+        output.duration += chrono::duration_cast<chrono::milliseconds>(timeStop - timeStart).count();
 
         delete progressArray;
-        delete arrayNew;
 
         progressArray = new int[arrayAlgResultSize];
         for(int j = 0; j < arrayAlgResultSize; j++){
@@ -145,7 +204,44 @@ int Tester::intersect(vector<vector<int>*>* data, int* terms, int termsLength, I
         free(arrayAlgResult);
     } 
     
+    output.resultLengths.push_back(progressArraySize);
+
     delete progressArray;
 
-    return duration;
+    return output;
+}
+
+TesterResult Tester::intersectPairsBsr(vector<BsrArrays*>* data, int* terms, int termsLength, IntersectionAlgBsr* algorithm){    
+    TesterResult output;
+
+    chrono::time_point<chrono::system_clock> timeStart;
+    chrono::time_point<chrono::system_clock> timeStop;   
+
+    int arrayAlgResultSize;  
+
+    for(int i = 1; i < termsLength; i++){
+        BsrArrays* bsrArrayA = data->at(terms[0]);
+        BsrArrays* bsrArrayB = data->at(terms[1]);
+
+        int* arrayAlgResult;
+        align_malloc((void**)&arrayAlgResult, 32, sizeof(int) * std::min(bsrArrayA->size, bsrArrayB->size));
+        
+        timeStart = chrono::system_clock::now(); 
+        arrayAlgResultSize = algorithm->intersect(bsrArrayA, bsrArrayB, arrayAlgResult);
+        timeStop = chrono::system_clock::now();
+
+        output.duration += chrono::duration_cast<chrono::milliseconds>(timeStop - timeStart).count();
+
+        free(arrayAlgResult);
+    } 
+    
+    output.resultLengths.push_back(arrayAlgResultSize);
+
+    return output;
+}
+
+TesterResult::TesterResult(){
+    this->duration = 0;
+    this->resultLengths = vector<int>();
+    this->algorithm = "";
 }

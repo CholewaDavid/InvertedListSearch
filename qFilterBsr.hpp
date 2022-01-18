@@ -1,13 +1,13 @@
 #ifndef QFILTER_BSR_HPP
 #define QFILTER_BSR_HPP
 
-#include "intersectionAlg.hpp"
+#include "intersectionAlgBsr.hpp"
 
 
-class QFilterBsr : public IntersectionAlg{
+class QFilterBsr : public IntersectionAlgBsr{
     public: 
         QFilterBsr();
-        virtual int intersect(int* arrayA, int sizeA, int* arrayB, int sizeB, int* arrayResult);               
+        virtual int intersect(BsrArrays* arrays_a, BsrArrays* arrays_b, int* arrayResult);               
         virtual std::string getName();
         static int* prepare_byte_check_mask_dict2();
         static uint8_t * prepare_match_shuffle_dict2();

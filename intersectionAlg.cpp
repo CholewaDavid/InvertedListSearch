@@ -1,5 +1,4 @@
 #include "intersectionAlg.hpp"
-#include <iostream>
 
 IntersectionAlg::IntersectionAlg(){    
 }
