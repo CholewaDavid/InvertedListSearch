@@ -11,7 +11,7 @@ class TesterResult{
     public:                
         TesterResult();       
 
-        int duration;
+        double duration;
         std::vector<int> resultLengths;
         std::string algorithm;
 };
@@ -22,7 +22,7 @@ class Tester{
         static bool checkIntersectionResultSizes(TesterResult reference, TesterResult result);
 
         //Generate testing data for random pair intersection
-        std::vector<std::vector<int>*> generateRandomPairTerms(int count, std::vector<int*>* data, std::vector<int>* dataLengths);
+        std::vector<std::vector<int>*> generateRandomPairTerms(int count, int termCount);
 
         //Generate testing data for distributed random pair intersection
         std::vector<std::vector<int>*> generateRandomDistPairTerms(int count, std::vector<int*>* data, std::vector<int>* dataLengths);
@@ -31,7 +31,10 @@ class Tester{
         std::vector<std::vector<int>*> generateRandomDistMultipleTerms(int count, std::vector<int*>* data, std::vector<int>* dataLengths, int maxTermCount);
 
         //Generate testing data from the top "count" terms
-        std::vector<std::vector<int>*> generateTopPairs(int count, std::vector<int*>* data, std::vector<int>* dataLengths);
+        std::vector<std::vector<int>*> generateTopPairs(int count);
+
+        //Generate testing pairs of top one term and random second term
+        std::vector<std::vector<int>*> generateTopRandomPair(int count, int dataSize);
 
         //Intersections of terms
         TesterResult testIntersection(std::vector<int*>* data, std::vector<int>* dataLengths, std::vector<std::vector<int>*>* terms, IntersectionAlg* algorithm); 

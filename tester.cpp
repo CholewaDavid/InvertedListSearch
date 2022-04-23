@@ -12,11 +12,11 @@ void align_malloc(void **memptr, size_t alignment, size_t size)
     int malloc_flag = posix_memalign(memptr, alignment, size);
 }
 
-vector<vector<int>*> Tester::generateRandomPairTerms(int count, std::vector<int*>* data, std::vector<int>* dataLengths){    
+vector<vector<int>*> Tester::generateRandomPairTerms(int count, int termCount){    
     vector<vector<int>*> output;
     for(int i = 0; i < count; i++){
-        int indexArrayA = rand() % data->size();
-        int indexArrayB = rand() % data->size();
+        int indexArrayA = rand() % termCount;
+        int indexArrayB = rand() % termCount;
         vector<int>* currentTerms = new vector<int>();
         currentTerms->push_back(indexArrayA);
         currentTerms->push_back(indexArrayB);
@@ -71,7 +71,7 @@ std::vector<std::vector<int>*> Tester::generateRandomDistMultipleTerms(int count
     return output;
 }
 
-std::vector<std::vector<int>*> Tester::generateTopPairs(int count, std::vector<int*>* data, std::vector<int>* dataLengths){
+std::vector<std::vector<int>*> Tester::generateTopPairs(int count){
     vector<vector<int>*>output;
     for(int i = 0; i < count - 1; i++){
         for(int j = i; j < count; j++){
@@ -80,6 +80,19 @@ std::vector<std::vector<int>*> Tester::generateTopPairs(int count, std::vector<i
             currentTerms->push_back(j);
             output.push_back(currentTerms);
         }
+    }
+    return output;
+}
+
+std::vector<std::vector<int>*> Tester::generateTopRandomPair(int count, int dataSize){
+    vector<vector<int>*> output;
+    for(int i = 0; i < count; i++){
+        int indexArrayA = 0;
+        int indexArrayB = rand() % dataSize;
+        vector<int>* currentTerms = new vector<int>();
+        currentTerms->push_back(indexArrayA);
+        currentTerms->push_back(indexArrayB);
+        output.push_back(currentTerms);
     }
     return output;
 }
@@ -96,11 +109,11 @@ TesterResult Tester::testIntersection(std::vector<int*>* data, std::vector<int>*
         for(int j = 0; j < termCount; j++){
             indexes[j] = terms->at(i)->at(j);
         }
-                
+
         tempOutput = this->intersect(data, dataLengths, indexes, termCount, algorithm);
         output.duration += tempOutput.duration;
         output.resultLengths.push_back(tempOutput.resultLengths.at(0));
-        delete indexes;
+        delete[] indexes;
     }
 
     return output;
@@ -191,9 +204,9 @@ TesterResult Tester::intersect(std::vector<int*>* data, std::vector<int>* dataLe
         arrayAlgResultSize = algorithm->intersect(progressArray, progressArraySize, arrayNew, arrayNewSize, arrayAlgResult);
         timeStop = chrono::system_clock::now();
 
-        output.duration += chrono::duration_cast<chrono::milliseconds>(timeStop - timeStart).count();
+        output.duration += chrono::duration_cast<chrono::nanoseconds>(timeStop - timeStart).count();
 
-        delete progressArray;
+        delete[] progressArray;
 
         progressArray = new int[arrayAlgResultSize];
         for(int j = 0; j < arrayAlgResultSize; j++){
@@ -205,8 +218,9 @@ TesterResult Tester::intersect(std::vector<int*>* data, std::vector<int>* dataLe
     } 
     
     output.resultLengths.push_back(progressArraySize);
+    output.duration = output.duration / 1000000;
 
-    delete progressArray;
+    delete[] progressArray;
 
     return output;
 }
@@ -230,12 +244,13 @@ TesterResult Tester::intersectPairsBsr(vector<BsrArrays*>* data, int* terms, int
         arrayAlgResultSize = algorithm->intersect(bsrArrayA, bsrArrayB, arrayAlgResult);
         timeStop = chrono::system_clock::now();
 
-        output.duration += chrono::duration_cast<chrono::milliseconds>(timeStop - timeStart).count();
+        output.duration += chrono::duration_cast<chrono::nanoseconds>(timeStop - timeStart).count();
 
         free(arrayAlgResult);
     } 
     
     output.resultLengths.push_back(arrayAlgResultSize);
+    output.duration = output.duration / 1000000;
 
     return output;
 }
